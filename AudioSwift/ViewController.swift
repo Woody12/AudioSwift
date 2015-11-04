@@ -115,6 +115,7 @@ extension ViewController {
 		if let _ = audioPlayer {
 			stop()
 			audioPlayer = nil
+			
 		}
 		else {
 			prepareToPlay()
