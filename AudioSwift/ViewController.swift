@@ -9,19 +9,22 @@
 import UIKit
 import AVFoundation
 
-private let kFSVoiceBubbleShouldStopNotification = "FSVoiceBubbleShouldStopNotification"
+private let kPlayerStopNotification = "PlayerStopNotification"
+private let kRecorderStopNotification = "RecorderStopNotification"
 
 private var audioPlayer: AVAudioPlayer?
+private var audioRecorder: AVAudioRecorder?
 private var asset: AVURLAsset?
 private var audioURL: NSURL?
 
-class ViewController: UIViewController, AVAudioPlayerDelegate {
+class ViewController: UIViewController, AVAudioPlayerDelegate, AVAudioRecorderDelegate {
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		// Do any additional setup after loading the view, typically from a nib.
 		
-		NSNotificationCenter.defaultCenter().addObserver(self, selector: "bubbleShouldStop:", name: kFSVoiceBubbleShouldStopNotification, object: nil)
+		NSNotificationCenter.defaultCenter().addObserver(self, selector: "audioPlayerStop:", name: kPlayerStopNotification, object: nil)
+		NSNotificationCenter.defaultCenter().addObserver(self, selector: "audioRecorderStop:", name: kRecorderStopNotification, object: nil)
 		
 		loadAudio(NSBundle.mainBundle().URLForResource("Let It Go", withExtension: "mp3"))
 	}
@@ -35,6 +38,14 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
 		
 		print("long gesture")
 		
+		if let _ = audioRecorder,
+			_ = audioRecorder?.recording {
+				stopRecorder()
+		}
+	
+		NSNotificationCenter.defaultCenter().postNotificationName(kRecorderStopNotification, object: nil)
+		record()
+		
 	}
 
 	@IBAction func playClick(sender: AnyObject) {
@@ -43,20 +54,26 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
 		
 		if let _ = audioPlayer,
 			_ = audioPlayer?.playing {
-				stop()
+				stopPlayer()
 		}
-		NSNotificationCenter.defaultCenter().postNotificationName(kFSVoiceBubbleShouldStopNotification, object: nil)
+		NSNotificationCenter.defaultCenter().postNotificationName(kPlayerStopNotification, object: nil)
 		play()
 	
 	}
 	
-	func bubbleShouldStop(notification: NSNotification) {
+	func audioPlayerStop(notification: NSNotification) {
 		
-		stop()
+		stopPlayer()
+	}
+	
+	func audioRecorderStop(notification: NSNotification) {
+		
+		stopRecorder()
 	}
 	
 	deinit {
-		NSNotificationCenter.defaultCenter().postNotificationName(kFSVoiceBubbleShouldStopNotification, object: nil)
+		NSNotificationCenter.defaultCenter().postNotificationName(kPlayerStopNotification, object: nil)
+		NSNotificationCenter.defaultCenter().postNotificationName(kRecorderStopNotification, object: nil)
 	}
 }
 
@@ -88,6 +105,12 @@ extension ViewController {
 		}
 		
 	}
+
+}
+
+extension ViewController {
+
+	// MARK: Play Audio
 	
 	func prepareToPlay() {
 		
@@ -108,12 +131,10 @@ extension ViewController {
 		
 	}
 	
-	// Play
-	
 	func play() {
 		
 		if let _ = audioPlayer {
-			stop()
+			stopPlayer()
 			audioPlayer = nil
 			
 		}
@@ -131,7 +152,7 @@ extension ViewController {
 	
 	}
 	
-	func pause() {
+	func pausePlayer() {
 		
 		if let player = audioPlayer {
 			if player.playing == true {
@@ -141,7 +162,8 @@ extension ViewController {
 		}
 	}
 	
-	func stop() {
+	func stopPlayer() {
+		
 		if let player = audioPlayer {
 			if player.playing == true {
 				player.stop()
@@ -152,5 +174,68 @@ extension ViewController {
 	}
 }
 
-
+extension ViewController {
+	
+	// MARK: Record Audio
+	
+	func prepareToRecord() {
+		
+		if let recorder = audioRecorder {
+			
+			recorder.stop()
+			audioPlayer = nil
+		}
+		
+		// Load Player with throwability
+		do {
+			audioRecorder = try AVAudioRecorder(URL: audioURL!, settings: nil)
+			audioRecorder?.delegate = self
+			audioRecorder?.prepareToRecord()
+		} catch {
+			print("Something went wrong!")
+		}
+		
+	}
+	
+	func record() {
+		
+		if let _ = audioRecorder {
+			stopRecorder()
+			audioRecorder = nil
+			
+		}
+		else {
+			prepareToRecord()
+			
+			if let recorder = audioRecorder {
+				if recorder.recording == false {
+					recorder.record()
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	func pauseRecorder() {
+		
+		if let recorder = audioRecorder {
+			if recorder.recording == true {
+				recorder.pause()
+			}
+			
+		}
+	}
+	
+	func stopRecorder() {
+		
+		if let recorder = audioRecorder {
+			if recorder.recording == true {
+				recorder.stop()
+			}
+			
+		}
+	}
+}
 
