@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="8191" systemVersion="14F27" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9531" systemVersion="14F1509" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="BYZ-38-t0r">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="8154"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9529"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
@@ -16,30 +17,17 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="RvP-TG-Bwf">
-                                <rect key="frame" x="277" y="64" width="49" height="30"/>
-                                <subviews>
-                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="uH6-sj-Dy6">
-                                        <rect key="frame" x="0.0" y="0.0" width="49" height="30"/>
-                                        <subviews>
-                                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="taj-rV-rHd">
-                                                <rect key="frame" x="0.0" y="0.0" width="49" height="30"/>
-                                                <subviews>
-                                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="R9F-A1-d8T">
-                                                        <rect key="frame" x="0.0" y="0.0" width="49" height="30"/>
-                                                        <state key="normal" title="Record"/>
-                                                        <connections>
-                                                            <outletCollection property="gestureRecognizers" destination="zSD-VV-Gu5" appends="YES" id="kyk-sv-xIW"/>
-                                                        </connections>
-                                                    </button>
-                                                </subviews>
-                                            </stackView>
-                                        </subviews>
-                                    </stackView>
-                                </subviews>
-                            </stackView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="R9F-A1-d8T">
+                                <rect key="frame" x="268" y="122" width="64" height="36"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                <state key="normal" title="Record"/>
+                                <connections>
+                                    <outletCollection property="gestureRecognizers" destination="zSD-VV-Gu5" appends="YES" id="kyk-sv-xIW"/>
+                                </connections>
+                            </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="4mr-Ct-wp6">
-                                <rect key="frame" x="285" y="162" width="30" height="30"/>
+                                <rect key="frame" x="281" y="232" width="38" height="36"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="20"/>
                                 <state key="normal" title="Play"/>
                                 <connections>
                                     <action selector="playClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="9fn-db-6UU"/>
@@ -48,10 +36,10 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="4mr-Ct-wp6" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" constant="-123" id="Auc-5f-ZJX"/>
+                            <constraint firstItem="4mr-Ct-wp6" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" constant="-50" id="Auc-5f-ZJX"/>
+                            <constraint firstItem="R9F-A1-d8T" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" constant="-160" id="Cur-Wx-b8n"/>
+                            <constraint firstItem="R9F-A1-d8T" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="U2q-gy-QvJ"/>
                             <constraint firstItem="4mr-Ct-wp6" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="ekI-3Q-Aiv"/>
-                            <constraint firstItem="RvP-TG-Bwf" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" constant="1.5" id="fdN-qZ-GiW"/>
-                            <constraint firstItem="RvP-TG-Bwf" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" constant="-221" id="iss-wn-PzD"/>
                         </constraints>
                     </view>
                 </viewController>

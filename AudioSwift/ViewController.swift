@@ -11,6 +11,7 @@ import AVFoundation
 
 private let kPlayerStopNotification = "PlayerStopNotification"
 private let kRecorderStopNotification = "RecorderStopNotification"
+private let audioFilename = "audioSwift.caf"
 
 private var audioPlayer: AVAudioPlayer?
 private var audioRecorder: AVAudioRecorder?
@@ -27,6 +28,8 @@ class ViewController: UIViewController, AVAudioPlayerDelegate, AVAudioRecorderDe
 		NSNotificationCenter.defaultCenter().addObserver(self, selector: "audioRecorderStop:", name: kRecorderStopNotification, object: nil)
 		
 		loadAudio(NSBundle.mainBundle().URLForResource("Let It Go", withExtension: "mp3"))
+		prepareToRecord()
+		
 	}
 
 	override func didReceiveMemoryWarning() {
@@ -38,13 +41,22 @@ class ViewController: UIViewController, AVAudioPlayerDelegate, AVAudioRecorderDe
 		
 		print("long gesture")
 		
-		if let _ = audioRecorder,
-			_ = audioRecorder?.recording {
-				stopRecorder()
+		//showSelection(sender as! UIButton)
+		
+		if let recognizer = sender as? UIGestureRecognizer {
+			
+			if recognizer.state == UIGestureRecognizerState.Began {
+				record()
+			}
+			else if (recognizer.state == UIGestureRecognizerState.Ended) || (recognizer.state == UIGestureRecognizerState.Cancelled) {
+				
+				if let _ = audioRecorder,
+					_ = audioRecorder?.recording {
+						NSNotificationCenter.defaultCenter().postNotificationName(kRecorderStopNotification, object: nil)
+				}
+				
+			}
 		}
-	
-		NSNotificationCenter.defaultCenter().postNotificationName(kRecorderStopNotification, object: nil)
-		record()
 		
 	}
 
@@ -52,15 +64,34 @@ class ViewController: UIViewController, AVAudioPlayerDelegate, AVAudioRecorderDe
 	
 		print("play")
 		
+		showSelection(sender as! UIButton)
+		
 		if let _ = audioPlayer,
 			_ = audioPlayer?.playing {
-				stopPlayer()
+				showSelection(sender as! UIButton)
+				NSNotificationCenter.defaultCenter().postNotificationName(kPlayerStopNotification, object: nil)
 		}
-		NSNotificationCenter.defaultCenter().postNotificationName(kPlayerStopNotification, object: nil)
+		
 		play()
 	
 	}
 	
+	func showSelection(button: UIButton) {
+		
+		if button.tag == 0 {
+			button.layer.borderColor = UIColor.redColor().CGColor
+			button.layer.borderWidth = 2.0
+			button.backgroundColor = UIColor.redColor()
+			button.tag = 1
+		}
+		else {
+			button.layer.borderColor = UIColor.whiteColor().CGColor
+			button.layer.borderWidth = 2.0
+			button.backgroundColor = UIColor.whiteColor()
+			button.tag = 0
+		}
+		
+	}
 	func audioPlayerStop(notification: NSNotification) {
 		
 		stopPlayer()
@@ -69,6 +100,21 @@ class ViewController: UIViewController, AVAudioPlayerDelegate, AVAudioRecorderDe
 	func audioRecorderStop(notification: NSNotification) {
 		
 		stopRecorder()
+	}
+	
+	func createFilePath(fileName: String) -> String {
+		
+		let paths = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.CachesDirectory, NSSearchPathDomainMask.UserDomainMask, true)
+		
+		// Convert to NSString since PathComponent is unavailable
+		let path = paths[0] as NSString
+		return path.stringByAppendingPathComponent(audioFilename)
+	}
+	
+	func fileExist(fileName: String) -> String? {
+		
+		let path = createFilePath(fileName)
+		return (NSFileManager.defaultManager().fileExistsAtPath(path) ? path : nil)
 	}
 	
 	deinit {
@@ -97,7 +143,9 @@ extension ViewController {
 						error = NSError(domain: "A voice audio shouldn't last longer than 60 seconds", code: 300, userInfo: nil)
 						
 					}
-					print("error: \(error?.localizedDescription)")
+					else {
+						print("error: \(error?.localizedDescription)")
+					}
 				}
 				
 			}
@@ -120,17 +168,23 @@ extension ViewController {
 			audioPlayer = nil
 		}
 		
+		let filePath = fileExist(audioFilename)
+		let fileURL = ((filePath == nil) ? audioURL : NSURL(fileURLWithPath: filePath!))
+		print("Play File url is \(fileURL)")
+		
 		// Load Player with throwability
 		do {
-			audioPlayer = try AVAudioPlayer(contentsOfURL: audioURL!)
+			audioPlayer = try AVAudioPlayer(contentsOfURL: fileURL!)
 			audioPlayer?.delegate = self
 			audioPlayer?.prepareToPlay()
+			audioPlayer?.volume = 1.0
+			
 		} catch {
-			print("Something went wrong!")
+			print("audio player issue!")
 		}
 		
 	}
-	
+
 	func play() {
 		
 		if let _ = audioPlayer {
@@ -186,36 +240,60 @@ extension ViewController {
 			audioPlayer = nil
 		}
 		
-		// Load Player with throwability
+		let audioFilePath = createFilePath(audioFilename)
+		
+		let fileURL = NSURL(fileURLWithPath: audioFilePath)
+		let recordSettings =
+			[
+				AVEncoderAudioQualityKey: AVAudioQuality.Max.rawValue,
+				AVEncoderBitRateKey: 320000,
+				AVNumberOfChannelsKey:  2,
+				AVSampleRateKey: 44100.0]
+//		let recordSettings = [AVSampleRateKey : NSNumber(float: Float(44100.0)),
+//			AVFormatIDKey : NSNumber(int: Int32(kAudioFormatAppleLossless)),
+//			AVNumberOfChannelsKey : NSNumber(int: 2),
+//			AVEncoderAudioQualityKey : NSNumber(int: Int32(AVAudioQuality.Max.rawValue))];
+		
+//		var recordSettings = [
+//			AVFormatIDKey: kAudioFormatAppleLossless,
+//			AVEncoderAudioQualityKey : AVAudioQuality.Max.rawValue,
+//			AVEncoderBitRateKey : 320000,
+//			AVNumberOfChannelsKey: 2,
+//			AVSampleRateKey : 44100.0
+//		]
+		
+		let audioSession = AVAudioSession.sharedInstance()
+		
 		do {
-			audioRecorder = try AVAudioRecorder(URL: audioURL!, settings: nil)
-			audioRecorder?.delegate = self
-			audioRecorder?.prepareToRecord()
+			
+			try audioSession.setCategory(AVAudioSessionCategoryPlayAndRecord, withOptions: AVAudioSessionCategoryOptions.AllowBluetooth)
+			
+			// Load Player with throwability
+			do {
+				audioRecorder = try AVAudioRecorder(URL: fileURL, settings: recordSettings as! [String : AnyObject])
+				audioRecorder?.delegate = self
+				let status = audioRecorder?.prepareToRecord()
+				
+				print("record start status: \(status)")
+				
+			} catch {
+				print("audio recorder issue!")
+			}
+			
+			
 		} catch {
-			print("Something went wrong!")
+			print("Session Error")
 		}
 		
 	}
 	
 	func record() {
 		
-		if let _ = audioRecorder {
-			stopRecorder()
-			audioRecorder = nil
-			
-		}
-		else {
-			prepareToRecord()
-			
-			if let recorder = audioRecorder {
-				if recorder.recording == false {
-					recorder.record()
-				}
-				
+		if let recorder = audioRecorder {
+			if recorder.recording == false {
+				recorder.record()
 			}
-			
 		}
-		
 	}
 	
 	func pauseRecorder() {
@@ -230,8 +308,11 @@ extension ViewController {
 	
 	func stopRecorder() {
 		
+		print("Trying to stop recorder")
+		
 		if let recorder = audioRecorder {
 			if recorder.recording == true {
+				print("Stop recording")
 				recorder.stop()
 			}
 			
@@ -239,3 +320,34 @@ extension ViewController {
 	}
 }
 
+extension ViewController {
+	
+	// MARK: Recorder / Player Delegate
+	
+	func audioPlayerDidFinishPlaying(player: AVAudioPlayer, successfully flag: Bool) {
+		if flag {
+			print("Finsh playing successfully.")
+		}
+	}
+	
+	func audioPlayerDecodeErrorDidOccur(player: AVAudioPlayer, error: NSError?) {
+		if (error != nil) {
+			print("Audio Play Decode Error: \(error?.localizedDescription)")
+
+		}
+	}
+	
+	func audioRecorderDidFinishRecording(recorder: AVAudioRecorder, successfully flag: Bool) {
+		if flag {
+			print("Finsh recording successfully.")
+		}
+
+	}
+	
+	func audioRecorderEncodeErrorDidOccur(recorder: AVAudioRecorder, error: NSError?) {
+		if (error != nil) {
+			print("Audio Record Decode Error: \(error?.localizedDescription)")
+			
+		}
+	}
+}
